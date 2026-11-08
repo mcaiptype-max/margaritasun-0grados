@@ -25,6 +25,27 @@ function loadModelViewer() {
   return window.__mvLoading
 }
 
+const isAndroid = () => /android/i.test(navigator.userAgent)
+const isIOS = () => /iphone|ipad|ipod/i.test(navigator.userAgent) || (navigator.maxTouchPoints > 1 && /macintosh/i.test(navigator.userAgent))
+
+// Respaldo manual: abre el visor AR del sistema aunque model-viewer no lo haya habilitado
+function launchSceneViewer() {
+  const file = new URL(GLB, window.location.href).href
+  const fallback = encodeURIComponent(window.location.href.split('#')[0] + '#ar')
+  const a = document.createElement('a')
+  a.href =
+    `intent://arvr.google.com/scene-viewer/1.2?file=${encodeURIComponent(file)}&mode=ar_preferred&resizable=false&title=Margarita%20Sun` +
+    `#Intent;scheme=https;package=com.google.android.googlequicksearchbox;action=android.intent.action.VIEW;S.browser_fallback_url=${fallback};end;`
+  a.click()
+}
+function launchQuickLook() {
+  const a = document.createElement('a')
+  a.rel = 'ar'
+  a.href = new URL(USDZ, window.location.href).href + '#allowsContentScaling=0'
+  a.appendChild(document.createElement('img'))
+  a.click()
+}
+
 const isMobile = () => /android|iphone|ipad|ipod/i.test(navigator.userAgent) || (navigator.maxTouchPoints > 1 && /macintosh/i.test(navigator.userAgent))
 
 export default function ARSection({ t, lang }) {
@@ -76,6 +97,8 @@ export default function ARSection({ t, lang }) {
     setMsg('')
     const el = mv.current
     if (el && el.canActivateAR) el.activateAR()
+    else if (isAndroid()) launchSceneViewer()
+    else if (isIOS() && document.createElement('a').relList?.supports?.('ar')) launchQuickLook()
     else setMsg(mobile ? t.unsupported : t.desktop)
   }
 
@@ -86,8 +109,8 @@ export default function ARSection({ t, lang }) {
           <span className="kicker">{t.kicker}</span>
           <h2 className="h2">{t.title}</h2>
           <p className="lead">{t.text}</p>
-          <button className="btn-primary ar-btn" onClick={openAR} disabled={!ready}>
-            <ARIcon /> {ready ? t.cta : t.loading}
+          <button className="btn-primary ar-btn" onClick={openAR}>
+            <ARIcon /> {t.cta}
           </button>
           {msg && <p className="ar-msg">{msg}</p>}
           {!mobile && (
@@ -96,7 +119,7 @@ export default function ARSection({ t, lang }) {
               <p>{t.desktop}</p>
             </div>
           )}
-          {mobile && !canAR && ready && <p className="ar-hint">{t.hint}</p>}
+          {mobile && !canAR && ready && !isAndroid() && <p className="ar-hint">{t.hint}</p>}
         </Reveal>
         <div className="ar-stage">
           <div className="ar-floor" aria-hidden />
@@ -107,7 +130,7 @@ export default function ARSection({ t, lang }) {
               ios-src={USDZ}
               alt="Margarita Sun"
               ar
-              ar-modes="webxr scene-viewer quick-look"
+              ar-modes="scene-viewer quick-look webxr"
               ar-scale="fixed"
               ar-placement="floor"
               camera-controls=""
@@ -116,8 +139,8 @@ export default function ARSection({ t, lang }) {
               shadow-intensity="1"
               exposure="1.05"
               environment-image="neutral"
-              camera-orbit="15deg 80deg 0.6m"
-              field-of-view="30deg"
+              camera-orbit="15deg 80deg 115%"
+              camera-target="auto auto auto"
               interaction-prompt="none"
               lang={lang}
               style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', background: 'transparent' }}
