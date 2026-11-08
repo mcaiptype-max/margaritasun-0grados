@@ -31,7 +31,8 @@ const isIOS = () => /iphone|ipad|ipod/i.test(navigator.userAgent) || (navigator.
 // Respaldo manual: abre el visor AR del sistema aunque model-viewer no lo haya habilitado
 function launchSceneViewer() {
   const file = new URL(GLB, window.location.href).href
-  const fallback = encodeURIComponent(window.location.href.split('#')[0] + '#ar')
+  // si el teléfono no tiene el visor de Google, el navegador regresa aquí con este ancla
+  const fallback = encodeURIComponent(window.location.href.split('#')[0] + '#ar-sin-visor')
   const a = document.createElement('a')
   a.href =
     `intent://arvr.google.com/scene-viewer/1.2?file=${encodeURIComponent(file)}&mode=ar_preferred&resizable=false&title=Margarita%20Sun` +
@@ -58,6 +59,11 @@ export default function ARSection({ t, lang }) {
   const [msg, setMsg] = useState('')
 
   useEffect(() => {
+    if (window.location.hash === '#ar-sin-visor' || window.location.hash === '#model-viewer-no-ar-fallback') {
+      setMsg(t.noViewer)
+      history.replaceState(null, '', window.location.pathname + '#ar')
+      setTimeout(() => document.getElementById('ar')?.scrollIntoView(), 300)
+    }
     setMobile(isMobile())
     QRCode.toDataURL(`${SITE.url}/#ar`, { margin: 1, width: 360, color: { dark: '#122a66', light: '#fbf5e8' } }).then(setQr)
     // cargar model-viewer solo cuando la sección se acerca a la pantalla
@@ -96,9 +102,11 @@ export default function ARSection({ t, lang }) {
   const openAR = () => {
     setMsg('')
     const el = mv.current
-    if (el && el.canActivateAR) el.activateAR()
-    else if (isAndroid()) launchSceneViewer()
+    // Android: siempre directo al visor AR de Google (Scene Viewer), funciona desde
+    // Chrome, Samsung Internet y otros navegadores, y no se "bloquea" al regresar.
+    if (isAndroid()) launchSceneViewer()
     else if (isIOS() && document.createElement('a').relList?.supports?.('ar')) launchQuickLook()
+    else if (el && el.canActivateAR) el.activateAR()
     else setMsg(mobile ? t.unsupported : t.desktop)
   }
 
@@ -112,7 +120,19 @@ export default function ARSection({ t, lang }) {
           <button className="btn-primary ar-btn" onClick={openAR}>
             <ARIcon /> {t.cta}
           </button>
-          {msg && <p className="ar-msg">{msg}</p>}
+          {msg && (
+            <p className="ar-msg">
+              {msg}
+              {msg === t.noViewer && (
+                <>
+                  {' '}
+                  <a href="https://play.google.com/store/apps/details?id=com.google.ar.core" target="_blank" rel="noreferrer">
+                    {t.install}
+                  </a>
+                </>
+              )}
+            </p>
+          )}
           {!mobile && (
             <div className="ar-desk">
               {qr && <img src={qr} alt="QR" width="120" height="120" />}
@@ -130,7 +150,7 @@ export default function ARSection({ t, lang }) {
               ios-src={USDZ}
               alt="Margarita Sun"
               ar
-              ar-modes="scene-viewer quick-look webxr"
+              ar-modes="scene-viewer quick-look"
               ar-scale="fixed"
               ar-placement="floor"
               camera-controls=""
