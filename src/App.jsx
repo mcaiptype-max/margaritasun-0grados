@@ -376,7 +376,7 @@ export default function App() {
         <Ritual t={t} fx={t.ritualFx} />
         <Origin t={t} />
         <Gallery t={t.bts} lang={lang} />
-        <ARSection t={t.ar} />
+        <ARSection t={t.ar} lang={lang} />
         <Green t={t} />
         <StudioCta t={t} />
       </main>

@@ -1,76 +1,131 @@
-import { lazy, Suspense, useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import QRCode from 'qrcode'
-import { Reveal, LazyMount } from '../fx/text'
+import { Reveal } from '../fx/text'
 import { SITE } from '../content'
 import { BOTTLE } from '../bottleSpec'
 
-const BottleStage = lazy(() => import('../three/BottleStage'))
-
-// Archivos del modelo (se generan desde el Estudio: botones .glb / .usdz)
+// Modelos de la botella a tamaño real (se generan desde el Estudio: botones .glb / .usdz)
 const GLB = '/models/margarita-sun.glb'
 const USDZ = '/models/margarita-sun.usdz'
+// <model-viewer> de Google: maneja AR en Android (Scene Viewer / WebXR) e iPhone (Quick Look)
+const MV_SRC = 'https://cdn.jsdelivr.net/npm/@google/model-viewer@4.4.0/dist/model-viewer.min.js'
 
-function platform() {
-  const a = document.createElement('a')
-  if (a.relList?.supports?.('ar')) return 'ios'
-  if (/android/i.test(navigator.userAgent)) return 'android'
-  return 'desktop'
+function loadModelViewer() {
+  if (customElements.get('model-viewer')) return Promise.resolve()
+  if (!window.__mvLoading) {
+    window.__mvLoading = new Promise((resolve, reject) => {
+      const s = document.createElement('script')
+      s.type = 'module'
+      s.src = MV_SRC
+      s.onload = resolve
+      s.onerror = reject
+      document.head.appendChild(s)
+    }).then(() => customElements.whenDefined('model-viewer'))
+  }
+  return window.__mvLoading
 }
 
-export default function ARSection({ t }) {
-  const [plat, setPlat] = useState('desktop')
-  const [qr, setQr] = useState(null)
-  const [note, setNote] = useState(false)
-  useEffect(() => {
-    setPlat(platform())
-    QRCode.toDataURL(`${SITE.url}/#ar`, { margin: 1, width: 360, color: { dark: '#122a66', light: '#fbf5e8' } }).then(setQr)
-  }, [])
+const isMobile = () => /android|iphone|ipad|ipod/i.test(navigator.userAgent) || (navigator.maxTouchPoints > 1 && /macintosh/i.test(navigator.userAgent))
 
-  const heightCm = Math.round((BOTTLE.bodyHeight + BOTTLE.shoulderHeight + BOTTLE.neckHeight + 7 + BOTTLE.capHeight * 0.45) / 10)
+export default function ARSection({ t, lang }) {
+  const mv = useRef(null)
+  const wrap = useRef(null)
+  const [ready, setReady] = useState(false)
+  const [canAR, setCanAR] = useState(false)
+  const [mobile, setMobile] = useState(false)
+  const [qr, setQr] = useState(null)
+  const [msg, setMsg] = useState('')
+
+  useEffect(() => {
+    setMobile(isMobile())
+    QRCode.toDataURL(`${SITE.url}/#ar`, { margin: 1, width: 360, color: { dark: '#122a66', light: '#fbf5e8' } }).then(setQr)
+    // cargar model-viewer solo cuando la sección se acerca a la pantalla
+    const io = new IntersectionObserver(
+      ([e]) => {
+        if (!e.isIntersecting) return
+        io.disconnect()
+        loadModelViewer()
+          .then(() => setReady(true))
+          .catch(() => setMsg(t.loadError))
+      },
+      { rootMargin: '600px' },
+    )
+    io.observe(wrap.current)
+    return () => io.disconnect()
+  }, [t.loadError])
+
+  useEffect(() => {
+    const el = mv.current
+    if (!ready || !el) return
+    const onLoad = () => setCanAR(!!el.canActivateAR)
+    const onStatus = (e) => {
+      if (e.detail.status === 'failed') setMsg(t.failed)
+    }
+    el.addEventListener('load', onLoad)
+    el.addEventListener('ar-status', onStatus)
+    if (el.loaded) onLoad()
+    return () => {
+      el.removeEventListener('load', onLoad)
+      el.removeEventListener('ar-status', onStatus)
+    }
+  }, [ready, t.failed])
+
+  const heightCm = Math.round((BOTTLE.bodyHeight + BOTTLE.shoulderHeight + BOTTLE.neckHeight + BOTTLE.capHeight + 1.5) / 10)
 
   const openAR = () => {
-    if (plat === 'ios') {
-      // Quick Look de iPhone/iPad: <a rel="ar"> con una imagen como único hijo
-      const a = document.createElement('a')
-      a.rel = 'ar'
-      a.href = new URL(USDZ, window.location.href).href + '#allowsContentScaling=0'
-      a.appendChild(document.createElement('img'))
-      a.click()
-    } else if (plat === 'android') {
-      const file = new URL(GLB, window.location.href).href
-      const fallback = encodeURIComponent(window.location.href)
-      window.location.href =
-        `intent://arvr.google.com/scene-viewer/1.0?file=${encodeURIComponent(file)}&mode=ar_preferred&title=Margarita%20Sun` +
-        `#Intent;scheme=https;package=com.google.android.googlequicksearchbox;action=android.intent.action.VIEW;S.browser_fallback_url=${fallback};end;`
-    } else {
-      setNote(true)
-    }
+    setMsg('')
+    const el = mv.current
+    if (el && el.canActivateAR) el.activateAR()
+    else setMsg(mobile ? t.unsupported : t.desktop)
   }
 
   return (
-    <section className="section ar" id="ar">
+    <section className="section ar" id="ar" ref={wrap}>
       <div className="ar-grid">
         <Reveal className="ar-copy">
           <span className="kicker">{t.kicker}</span>
           <h2 className="h2">{t.title}</h2>
           <p className="lead">{t.text}</p>
-          <button className="btn-primary ar-btn" onClick={openAR}>
-            <ARIcon /> {t.cta}
+          <button className="btn-primary ar-btn" onClick={openAR} disabled={!ready}>
+            <ARIcon /> {ready ? t.cta : t.loading}
           </button>
-          {plat === 'desktop' && (
-            <div className={`ar-desk ${note ? 'pulse-once' : ''}`}>
+          {msg && <p className="ar-msg">{msg}</p>}
+          {!mobile && (
+            <div className="ar-desk">
               {qr && <img src={qr} alt="QR" width="120" height="120" />}
               <p>{t.desktop}</p>
             </div>
           )}
+          {mobile && !canAR && ready && <p className="ar-hint">{t.hint}</p>}
         </Reveal>
         <div className="ar-stage">
           <div className="ar-floor" aria-hidden />
-          <Suspense fallback={null}>
-            <LazyMount className="fill">
-              <BottleStage mode="hero" className="fill" />
-            </LazyMount>
-          </Suspense>
+          {ready && (
+            <model-viewer
+              ref={mv}
+              src={GLB}
+              ios-src={USDZ}
+              alt="Margarita Sun"
+              ar
+              ar-modes="webxr scene-viewer quick-look"
+              ar-scale="fixed"
+              ar-placement="floor"
+              camera-controls=""
+              auto-rotate=""
+              touch-action="pan-y"
+              shadow-intensity="1"
+              exposure="1.05"
+              environment-image="neutral"
+              camera-orbit="15deg 80deg 0.6m"
+              field-of-view="30deg"
+              interaction-prompt="none"
+              lang={lang}
+              style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', background: 'transparent' }}
+            >
+              <span slot="ar-button" style={{ display: 'none' }} />
+              <div slot="progress-bar" />
+            </model-viewer>
+          )}
           <div className="ar-ruler" aria-hidden>
             <span>≈ {heightCm} cm</span>
           </div>

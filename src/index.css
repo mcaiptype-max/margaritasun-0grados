@@ -355,6 +355,9 @@ h1, h2, h3 { margin: 0; }
 .ar-ruler::before { top: 0; } .ar-ruler::after { bottom: 0; }
 .ar-ruler span { position: absolute; top: 50%; left: 12px; translate: 0 -50%; white-space: nowrap; font-weight: 700; color: var(--cobalt-d); font-size: 14px; }
 .ar-badge { position: absolute; top: 18px; left: 18px; padding: 6px 12px; border-radius: 99px; background: var(--cobalt); color: var(--cream); font-size: 12px; font-weight: 700; letter-spacing: .12em; }
+.ar-msg { margin: 14px 0 0; padding: 12px 14px; border-radius: 14px; background: #fde2c2; color: #7a3a07; font-size: 14.5px; max-width: 460px; }
+.ar-hint { margin: 12px 0 0; font-size: 13.5px; color: var(--ink-2); max-width: 440px; }
+.ar-btn:disabled { opacity: .6; cursor: progress; }
 .model-row { margin-top: 4px; }
 .model-row .chip { flex: 1; justify-content: center; text-align: center; font-size: 13px; }
 

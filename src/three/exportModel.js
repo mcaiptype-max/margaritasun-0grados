@@ -5,12 +5,28 @@ import { getBottleGeometries, makeBottleMaterials } from './bottleGeometry'
 import { loadLabelTexture } from './Bottle'
 import { BOTTLE } from '../bottleSpec'
 
+// Algunos visores AR prefieren texturas de tamaño potencia de 2
+function potTexture(tex) {
+  const img = tex?.image
+  if (!img || !img.width) return tex
+  const p2 = (n) => Math.pow(2, Math.round(Math.log2(n)))
+  const c = document.createElement('canvas')
+  c.width = Math.min(2048, p2(img.width))
+  c.height = Math.min(2048, p2(img.height))
+  c.getContext('2d').drawImage(img, 0, 0, c.width, c.height)
+  const t = new THREE.CanvasTexture(c)
+  t.colorSpace = THREE.SRGBColorSpace
+  t.flipY = tex.flipY
+  return t
+}
+
 // Botella a tamaño real (metros) para realidad aumentada.
 async function buildScene({ forUSDZ = false } = {}) {
   const label = await loadLabelTexture()
   const g = getBottleGeometries(BOTTLE)
   const m = makeBottleMaterials(BOTTLE)
-  m.label.map = label
+  m.label.map = potTexture(label)
+  m.tag.map = potTexture(m.tag.map)
   const scene = new THREE.Scene()
   const root = new THREE.Group()
   root.name = 'MargaritaSun'

@@ -129,6 +129,11 @@ export const content = {
       cta: 'Ver en mi espacio',
       desktop: 'Abre esta página en tu celular para verla en realidad aumentada. Aquí puedes girarla con el mouse.',
       download: 'Descargar modelo 3D (.glb)',
+      loading: 'Cargando 3D…',
+      unsupported: 'Este navegador no abre realidad aumentada. En iPhone usa Safari; en Android usa Chrome con la app “Servicios de Google Play para RA” instalada.',
+      hint: 'Tip: en iPhone ábrela en Safari y en Android en Chrome para ver la botella en tu mesa.',
+      failed: 'No se pudo abrir la cámara. En Android instala “Servicios de Google Play para RA” desde Play Store; en iPhone abre la página en Safari.',
+      loadError: 'No se pudo cargar el visor 3D. Revisa tu conexión e intenta de nuevo.',
     },
     bts: {
       kicker: 'Detrás de cámaras',
@@ -253,6 +258,11 @@ export const content = {
       cta: 'ARで見る',
       desktop: 'ARはスマートフォンでこのページを開いてご覧ください。ここではマウスで回転できます。',
       download: '3Dモデルをダウンロード (.glb)',
+      loading: '3Dを読み込み中…',
+      unsupported: 'このブラウザはARに対応していません。iPhoneはSafari、AndroidはChrome（「Google Play開発者サービス（AR）」が必要）でお試しください。',
+      hint: 'ヒント：iPhoneはSafari、AndroidはChromeで開くと、テーブルの上にボトルを置けます。',
+      failed: 'カメラを起動できませんでした。Androidは「Google Play開発者サービス（AR）」をインストール、iPhoneはSafariで開いてください。',
+      loadError: '3Dビューアを読み込めませんでした。接続を確認してもう一度お試しください。',
     },
     bts: {
       kicker: 'メイキング',
