@@ -6,7 +6,7 @@ import { Lights } from './BottleStage'
 import { getBottleGeometries, makeBottleMaterials } from './bottleGeometry'
 import { useLabelTexture } from './Bottle'
 import { BOTTLE, PACK } from '../bottleSpec'
-import { kraftTexture, boxTextures, topTexture, stickerTexture, woodTexture, filmTexture } from './packTextures'
+import { kraftTexture, topTexture, woodTexture, filmTexture } from './packTextures'
 
 // ── utilidades de animación ─────────────────────────────────
 const CM = 0.1 // 1 cm en unidades de escena (1 u = 10 cm)
@@ -46,9 +46,9 @@ const FLAP_OPEN = 1.95 // ~112° hacia afuera
 // Arreglo en molinete (pinwheel): 4 cajas alrededor de un hueco central
 const SLOTS = [
   { x: S / 2 - L / 2, z: S / 2 - W / 2, r: 0 }, // C (la caja llena, al frente)
-  { x: -S / 2 + L / 2, z: -S / 2 + W / 2, r: 0 },
+  { x: -S / 2 + L / 2, z: -S / 2 + W / 2, r: Math.PI }, // frente hacia afuera
   { x: S / 2 - W / 2, z: -S / 2 + L / 2, r: Math.PI / 2 },
-  { x: -S / 2 + W / 2, z: S / 2 - L / 2, r: Math.PI / 2 },
+  { x: -S / 2 + W / 2, z: S / 2 - L / 2, r: -Math.PI / 2 },
 ].slice(0, Math.max(1, PACK.boxesOnPallet))
 
 // ── cámara por etapa: [p, posición, objetivo] ───────────────
@@ -114,29 +114,42 @@ function useMats() {
     const wood = woodTexture()
     const woodStamp = woodTexture(true)
     const wm = (map) => new THREE.MeshStandardMaterial({ map, roughness: 0.8 })
-    // materiales de las caras impresas (las texturas llegan después, async)
-    const faces = Array.from({ length: PACK.boxesOnPallet }, () => ({ marks: mk(), info: mk(), short: mk() }))
+    // Caras impresas reales (diseño final en tabloide, fondo blanco).
+    // Caja 1/4 y 2/4 en español, 3/4 y 4/4 en japonés.
+    const loader = new THREE.TextureLoader()
+    const tex = (name) => {
+      const t = loader.load(`/pack/${name}.jpg`)
+      t.colorSpace = THREE.SRGBColorSpace
+      t.anisotropy = 8
+      return t
+    }
+    const pm = (name) => new THREE.MeshStandardMaterial({ map: tex(name), roughness: 0.75 })
+    const faces = PACK.boxes.map((b) => ({
+      front: pm(`front_${b.lang}`),
+      back: pm(`back_${b.lang}`),
+      data: pm(`side_data_${b.lang}`),
+      ship: pm(`side_ship_${b.n}`),
+    }))
     const top = new THREE.MeshStandardMaterial({ map: topTexture(), roughness: 0.85 })
     return {
       kraft: k,
       kraftIn: kIn,
       faces,
       top,
-      // caja cerrada: +x, −x, +y, −y, +z, −z
-      closed: faces.map((f) => [f.short, f.short, top, k, f.marks, f.info]),
-      wallFront: [k, k, k, k, faces[0].marks, kIn],
-      wallBack: [k, k, k, k, kIn, faces[0].info],
-      wallRight: [faces[0].short, kIn, k, k, k, k],
-      wallLeft: [kIn, faces[0].short, k, k, k, k],
+      // caja cerrada: +x (embarque), −x (datos), +y, −y, +z (frente con QR), −z (atrás)
+      closed: faces.map((f) => [f.ship, f.data, top, k, f.front, f.back]),
+      wallFront: [k, k, k, k, faces[0].front, kIn],
+      wallBack: [k, k, k, k, kIn, faces[0].back],
+      wallRight: [faces[0].ship, kIn, k, k, k, k],
+      wallLeft: [kIn, faces[0].data, k, k, k, k],
       flap: [k, k, kIn, k, k, k],
       flapOut: [k, k, k, kIn, k, k],
       tape: new THREE.MeshPhysicalMaterial({ color: '#fff6e0', transparent: true, opacity: 0.45, roughness: 0.15, clearcoat: 1 }),
-      sticker: new THREE.MeshStandardMaterial({ map: stickerTexture(), roughness: 0.6 }),
       wood: wm(wood),
       woodStamp: [wm(woodStamp), wm(woodStamp), wm(wood), wm(wood), wm(woodStamp), wm(woodStamp)],
       strap: new THREE.MeshStandardMaterial({ color: '#1e2230', roughness: 0.45, side: THREE.DoubleSide }),
       corner: new THREE.MeshStandardMaterial({ map: kraft, color: '#a87a48', roughness: 0.8 }),
-      paper: new THREE.MeshStandardMaterial({ color: '#c9a06a', roughness: 1, flatShading: true }),
+      center: new THREE.MeshStandardMaterial({ map: kraft, roughness: 0.88 }),
       film: new THREE.MeshPhysicalMaterial({
         color: '#eef4ff',
         map: filmTexture(),
@@ -191,26 +204,6 @@ function Scene({ progress, onStage }) {
     bm.label.needsUpdate = true
   }, [label, bm])
 
-  // Texturas impresas de cada caja (C/N 1/4 … 4/4)
-  useEffect(() => {
-    let alive = true
-    const run = async () => {
-      await document.fonts?.ready
-      for (let i = 0; i < mats.faces.length; i++) {
-        const tx = await boxTextures(i + 1, mats.faces.length)
-        if (!alive) return
-        for (const key of ['marks', 'info', 'short']) {
-          mats.faces[i][key].map = tx[key]
-          mats.faces[i][key].needsUpdate = true
-        }
-      }
-    }
-    run()
-    return () => {
-      alive = false
-    }
-  }, [mats])
-
   const { gl, camera, size } = useThree()
   useEffect(() => {
     gl.localClippingEnabled = true
@@ -242,23 +235,8 @@ function Scene({ progress, onStage }) {
     return out
   }, [dx, dz])
 
-  // Relleno: bolas de papel kraft en el hueco central del arreglo
-  const PAPER = 26
-  const paperData = useMemo(() => {
-    const hole = S - 2 * L + 0.0 // lado del hueco = |L − W|
-    const side = Math.abs(L - W) - 0.06
-    return Array.from({ length: PAPER }, (_, i) => ({
-      x: (Math.random() - 0.5) * side,
-      z: (Math.random() - 0.5) * side,
-      y: PH + 0.08 + (i / PAPER) * (H - 0.2),
-      s: 0.07 + Math.random() * 0.05,
-      r: Math.random() * Math.PI,
-      d: i / PAPER,
-      hole,
-    }))
-  }, [])
-  const paperGeo = useMemo(() => new THREE.IcosahedronGeometry(1, 0), [])
-
+  // Caja pequeña que ocupa el hueco central del arreglo en molinete
+  const HOLE = Math.abs(L - W) - 0.02
   const r = {
     world: useRef(),
     full: useRef(),
@@ -273,7 +251,6 @@ function Scene({ progress, onStage }) {
     fR: useRef(),
     tape: useRef(),
     tapeEnds: useRef([]),
-    sticker: useRef(),
     pallet: useRef(),
     others: useRef([]),
     corners: useRef([]),
@@ -281,7 +258,7 @@ function Scene({ progress, onStage }) {
     film: useRef(),
     roll: useRef(),
     inst: useRef([]),
-    paper: useRef(),
+    center: useRef(),
     divs: useRef([]),
   }
   const strapGeos = useMemo(
@@ -386,9 +363,6 @@ function Scene({ progress, onStage }) {
     r.tape.current.visible = tt > 0
     r.tape.current.scale.x = Math.max(1e-4, tt)
     r.tapeEnds.current.forEach((e) => e && (e.visible = tt >= 1))
-    const ts = eBack(seg(p, 0.5, 0.52))
-    r.sticker.current.visible = ts > 0.001
-    r.sticker.current.scale.setScalar(Math.max(1e-4, ts))
 
     // 4 · tarima + la caja llena va a su lugar + 3 cajas más + relleno
     const lift = eInOut(seg(p, 0.52, 0.56))
@@ -407,19 +381,10 @@ function Scene({ progress, onStage }) {
       o.position.set(sl.x, PH + H / 2 + 4 * (1 - eOut(t)), sl.z)
       o.rotation.set(0, sl.r + (1 - t) * 0.5, (1 - t) * 0.15)
     })
-    const pim = r.paper.current
-    if (pim) {
-      for (let i = 0; i < PAPER; i++) {
-        const d = paperData[i]
-        const t = eOut(seg(p, 0.645 + d.d * 0.03, 0.665 + d.d * 0.03))
-        tmp.e.set(d.r, d.r * 2, d.r * 0.5)
-        tmp.q.setFromEuler(tmp.e)
-        tmp.s.set(d.s, d.s * 0.85, d.s * 1.1).multiplyScalar(t > 0 ? 1 : 1e-4)
-        tmp.m.compose(tmp.v.set(d.x, d.y + (1 - t) * 3, d.z), tmp.q, tmp.s)
-        pim.setMatrixAt(i, tmp.m)
-      }
-      pim.instanceMatrix.needsUpdate = true
-    }
+    const tc = seg(p, 0.645, 0.675)
+    r.center.current.visible = tc > 0
+    r.center.current.position.set(0, PH + H / 2 + 3.5 * (1 - eOut(tc)), 0)
+    r.center.current.rotation.y = (1 - tc) * 0.8
 
     // 5 · esquineros
     r.corners.current.forEach((c, k) => {
@@ -542,9 +507,7 @@ function Scene({ progress, onStage }) {
             <boxGeometry args={[0.004, 0.5, 0.48]} />
           </mesh>
         ))}
-        <mesh ref={r.sticker} position={[0, H + 0.008, -W / 4 - 0.05]} rotation={[-Math.PI / 2, 0, 0]} material={mats.sticker}>
-          <planeGeometry args={[0.95, 0.61]} />
-        </mesh>
+
       </group>
 
       {/* Tarima */}
@@ -560,7 +523,9 @@ function Scene({ progress, onStage }) {
       ))}
 
       {/* Relleno: papel kraft en el hueco central */}
-      <instancedMesh ref={r.paper} args={[paperGeo, mats.paper, PAPER]} frustumCulled={false} />
+      <mesh ref={r.center} material={[mats.center, mats.center, mats.top, mats.center, mats.center, mats.center]}>
+        <boxGeometry args={[HOLE, H, HOLE]} />
+      </mesh>
 
       {/* Esquineros */}
       {cornerSpots.map(([x, z], k) => (

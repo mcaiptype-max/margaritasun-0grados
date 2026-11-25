@@ -12,7 +12,7 @@ export const SITE = {
   // Si colocan su etiqueta final como /public/etiqueta.png
   // (proporción 195 × 80 mm), la botella 3D la usará en lugar
   // de la etiqueta dibujada por código.
-  customLabel: '/etiqueta.png',
+  customLabel: '/etiqueta.jpg',
 }
 
 // ─────────────────────────────────────────────────────────────
@@ -112,11 +112,11 @@ export const content = {
       title: 'Así viaja a Japón',
       hint: 'Sigue bajando',
       stages: [
-        { tag: 'Envase', t: 'La botella', d: 'Vidrio de 250 mL con tapa metálica dorada, etiqueta bilingüe español · japonés y etiqueta colgante de papel kraft.' },
-        { tag: 'Empaque', t: 'Caja de cartón corrugado', d: 'Caja regular de 35 × 25 × 25 cm (medidas externas) que se arma levantando sus paredes y solapas.' },
+        { tag: 'Envase', t: 'La botella', d: 'Vidrio de 250 mL con tapa metálica dorada, etiqueta bilingüe y sobre kraft de frutos rojos deshidratados atado con yute.' },
+        { tag: 'Empaque', t: 'Caja de cartón corrugado', d: 'Caja de 35 × 25 × 25 cm con caras impresas en español o japonés y franja exhibidora con QR, separada por una perforación.' },
         { tag: 'Empaque', t: '24 botellas protegidas', d: 'Separadores de cartón en cuadrícula de 6 × 4 para que el vidrio no choque entre sí.' },
-        { tag: 'Marcado', t: 'Cierre y marcado', d: 'Solapas cerradas con cinta. Pictogramas ISO 780 (este lado arriba, frágil, mantener seco, 0–10 °C, estiba máx. 3) y marcas de embarque 0G · MS261111 · TOKYO · VIA YOKOHAMA · C/N 1/4.' },
-        { tag: 'Embalaje', t: 'Entarimado', d: '4 cajas en arreglo de molinete sobre una tarima de 65 × 65 cm tratada según NIMF 15; solo una va llena y el hueco central lleva papel kraft como relleno.' },
+        { tag: 'Marcado', t: 'Cierre y marcado', d: 'Solapas cerradas con cinta. Pictogramas ISO 780 en los lados largos y, en los laterales, datos del producto y marca de embarque 0G · PO 26-1111 · CD. DE MÉXICO · 1/4.' },
+        { tag: 'Embalaje', t: 'Entarimado', d: '4 cajas en molinete sobre tarima de 65 × 65 cm (NIMF 15): 2 en español y 2 en japonés, solo una llena; una caja pequeña rellena el hueco central.' },
         { tag: 'Protección', t: 'Esquineros', d: 'Protegen las aristas de las cajas y reparten la presión del fleje.' },
         { tag: 'Sujeción', t: 'Fleje', d: 'Cintas de polipropileno que aseguran las cajas a la tarima.' },
         { tag: 'Listo para exportar', t: 'Playo', d: 'Película estirable que envuelve la carga, la protege del polvo y la humedad y la mantiene estable.' },
@@ -243,11 +243,11 @@ export const content = {
       title: '日本への旅',
       hint: 'スクロールして続きを見る',
       stages: [
-        { tag: '容器', t: 'ボトル', d: '250mlのガラス瓶、ゴールドの金属キャップ、二か国語ラベルとクラフト紙のタグ。' },
-        { tag: '包装', t: '段ボールケース', d: '外寸35 × 25 × 25 cmの段ボールケース。側面とフラップを起こして組み立てます。' },
+        { tag: '容器', t: 'ボトル', d: '250mlのガラス瓶、ゴールドの金属キャップ、二か国語ラベル、ジュートひもで結んだドライベリーのクラフト小袋。' },
+        { tag: '包装', t: '段ボールケース', d: '外寸35 × 25 × 25 cm。スペイン語版と日本語版の印刷面、ミシン目で切り離せるQR付きディスプレイ帯。' },
         { tag: '包装', t: '24本をしっかり保護', d: '6 × 4の段ボール仕切りで、瓶同士がぶつかりません。' },
-        { tag: 'ケースマーク', t: '封かんと表示', d: 'フラップをテープで封かん。取扱い表示（ISO 780：天地無用・割れ物注意・水濡れ防止・0〜10 °C・3段積みまで）と荷印 0G · MS261111 · TOKYO · VIA YOKOHAMA · C/N 1/4。' },
-        { tag: '梱包', t: 'パレット積み', d: 'ISPM 15処理済みの65 × 65 cmパレットにピンホイール積みで4ケース。中身入りは1ケースのみ、中央のすき間にはクラフト紙の緩衝材。' },
+        { tag: 'ケースマーク', t: '封かんと表示', d: 'フラップをテープで封かん。長辺にISO 780の取扱い表示、側面に商品情報と荷印 0GJ · PO 26-1111 · YOKOHAMA · 3/4。' },
+        { tag: '梱包', t: 'パレット積み', d: 'ISPM 15処理済み65 × 65 cmパレットにピンホイール積みで4ケース（スペイン語2・日本語2、中身入り1）。中央のすき間には小箱。' },
         { tag: '保護', t: 'コーナーガード', d: 'ケースの角を守り、バンドの圧力を分散します。' },
         { tag: '固定', t: 'PPバンド', d: 'ポリプロピレンのバンドでケースをパレットに固定。' },
         { tag: '輸出準備完了', t: 'ストレッチフィルム', d: '荷物を包み、ほこりや湿気から守り、荷崩れを防ぎます。' },

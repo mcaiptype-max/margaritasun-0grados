@@ -455,11 +455,15 @@ export function tagTexture() {
   drawTag(ctx)
   tagTex = new THREE.CanvasTexture(cv)
   tagTex.colorSpace = THREE.SRGBColorSpace
-  // redibujar cuando terminen de cargar las fuentes
-  document.fonts?.load(`700 50px "Fraunces"`).then(() => {
-    drawTag(ctx)
+  // diseño real del sobre kraft (frente en español)
+  const img = new Image()
+  img.onload = () => {
+    cv.width = img.width
+    cv.height = img.height
+    ctx.drawImage(img, 0, 0)
     tagTex.needsUpdate = true
-  })
+  }
+  img.src = '/pack/sobre_es.jpg'
   return tagTex
 }
 

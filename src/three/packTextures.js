@@ -267,7 +267,6 @@ export function topTexture() {
   t.fillRect(0, H / 2 - 70, W, 140)
   t.fillStyle = 'rgba(255,255,255,0.25)'
   t.fillRect(0, H / 2 - 70, W, 8)
-  drawSticker(t, W * 0.5, H * 0.24, 380)
   return toTex(c)
 }
 

@@ -34,6 +34,13 @@ export const PACK = {
   pallet: { l: 65, w: 65, h: 10 }, // tarima a escala
   boxesOnPallet: 4, //             solo la primera va llena
   maxStack: 3, //                  estiba máxima indicada en la caja
+  // Cajas sobre la tarima: idioma de las caras y número de caja (C/N)
+  boxes: [
+    { lang: 'es', n: 1 }, // la caja llena, al frente
+    { lang: 'es', n: 2 },
+    { lang: 'jp', n: 3 },
+    { lang: 'jp', n: 4 },
+  ],
 
   // Datos del marcado real de la caja
   marks: {

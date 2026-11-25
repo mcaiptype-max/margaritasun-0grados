@@ -136,9 +136,7 @@ export function getTagGeometries(spec = BOTTLE) {
   const ang = -Math.PI / 4
   const dir = new THREE.Vector3(Math.cos(ang), 0, -Math.sin(ang)).normalize()
   const knot = dir.clone().multiplyScalar(ringR).setY(y)
-  const tagW = 46 * MM
-  const tagH = 33 * MM
-  const hole = knot.clone().add(dir.clone().multiplyScalar(9 * MM)).add(new THREE.Vector3(0, -6 * MM, 0))
+  const hole = knot.clone().add(dir.clone().multiplyScalar(24 * MM)).add(new THREE.Vector3(0, -8 * MM, 0))
   const string = new THREE.CylinderGeometry(0.6 * MM, 0.6 * MM, 1, 6)
   const sv = hole.clone().sub(knot)
   const sm = new THREE.Matrix4().compose(
@@ -147,10 +145,10 @@ export function getTagGeometries(spec = BOTTLE) {
     new THREE.Vector3(1, sv.length(), 1),
   )
   string.applyMatrix4(sm)
-  // tarjeta: cuelga del agujero (esquina superior), inclinada como en las fotos
-  const tag = new THREE.PlaneGeometry(tagW, tagH)
-  tag.translate(tagW / 2 - 5 * MM, -tagH / 2 + 5 * MM, 0)
-  tag.rotateZ(-0.62)
+  // sobre kraft de frutos rojos (4.5 × 6.8 cm) colgando del cordón de yute
+  const tag = new THREE.PlaneGeometry(45 * MM, 68 * MM)
+  tag.translate(0, -34 * MM + 2 * MM, 0)
+  tag.rotateZ(-0.12)
   tag.rotateY(ang + Math.PI / 2 - 0.35)
   tag.translate(hole.x, hole.y, hole.z)
   return { twine, string, tag }
